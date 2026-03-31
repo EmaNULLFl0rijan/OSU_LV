@@ -28,7 +28,7 @@ import sklearn.linear_model as lm
 from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error, r2_score
 
 #task A
-data = pd.read_csv("LV4/data_C02_emission.csv")
+data = pd.read_csv("data_C02_emission.csv")
 print(data.info())
 
 features = [
