@@ -20,81 +20,75 @@ g) Što se dogada s vrijednostima evaluacijskih metrika na testnom skupu kada mi
 ulaznih velicina? """
 
 
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score
-from sklearn.model_selection import train_test_split
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-import numpy as np
+import sklearn.linear_model as lm
+from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error, r2_score
 
-#a)
-data = pd.read_csv("data_C02_emission.csv")
-numeric = ["Engine Size (L)",
-           "Cylinders",
-           "Fuel Consumption City (L/100km)",
-           "Fuel Consumption Hwy (L/100km)",
-           "Fuel Consumption Comb (L/100km)",
-           "Fuel Consumption Comb (mpg)"]
+#task A
+data = pd.read_csv("LV4/data_C02_emission.csv")
+print(data.info())
 
-X = data[numeric]
-y = data["CO2 Emissions (g/km)"]
+features = [
+    "Engine Size (L)",
+    "Cylinders",
+    "Fuel Consumption City (L/100km)",
+    "Fuel Consumption Hwy (L/100km)",
+    "Fuel Consumption Comb (L/100km)",
+    "Fuel Consumption Comb (mpg)"
+]
 
-X_train, X_test, y_train, y_test = train_test_split(X,
-                                                    y, test_size=0.2,
-                                                    random_state=1)
+X = data[features]
+Y = data["CO2 Emissions (g/km)"]
 
-#b)
-plt.scatter(X_train["Engine Size (L)"], y_train, color="blue")
-plt.scatter(X_test["Engine Size (L)"], y_test, color="red")
-plt.xlabel("Engine Size (L)")
-plt.ylabel("CO2 Emissions (g/km)")
-plt.title("Engine Size vs CO2 Emissions (g/km)")
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size= 0.2, random_state=1)
+
+#task B
+plt.figure()
+plt.scatter(X_train["Engine Size (L)"], Y_train, marker=".", color="blue", label="train")
+plt.scatter(X_test["Engine Size (L)"], Y_test, marker=".", color="red", label="test")
+plt.legend()
 plt.show()
 
-#c)
-plt.hist(X_train["Engine Size (L)"], color="blue")
-plt.show()
-
+#test C
 sc = StandardScaler()
-#Converst data frame to numpy
-X_train_scaled = sc.fit_transform(X_train)
-#Numpy - Data frame
-X_train_scaled = pd.DataFrame(X_train_scaled, columns = X_train.columns)
-#plots standardised values
-plt.hist(X_train_scaled["Engine Size (L)"], color="blue")
+X_train_n = sc.fit_transform(X_train)
+X_train_n = pd.DataFrame(X_train_n, columns= X_train.columns) #making X_train_n a DataFrame
+
+X_test_n = sc.transform(X_test)
+X_test_n = pd.DataFrame(X_test_n, columns=X_test.columns)
+
+plt.figure()
+plt.hist(X_train["Engine Size (L)"], alpha=0.5, label="before scaling")
+plt.hist(X_train_n["Engine Size (L)"], alpha=0.5, label="after scaling")
+plt.legend()
 plt.show()
 
-X_test_scaled = sc.transform(X_test)
-X_test_scaled = pd.DataFrame(X_test_scaled, columns = X_test.columns)
+#task D
 
-#d)
-linearModel = LinearRegression()
-linearModel.fit(X_train_scaled, y_train)
+linearModel = lm.LinearRegression()
+linearModel.fit(X_train_n, Y_train)
+print("Koeficijenti:",linearModel.coef_)
+print("Slobodan član:",linearModel.intercept_)
 
-#Pisitiv values have positive impact of y
-#Negative values have negative impact on y
-for col, coef in zip(X_train.columns, linearModel.coef_):
-    print(col, coef)
+#task E
+Y_predicted = linearModel.predict(X_test_n)
 
-#e)
-y_test_prediction = linearModel.predict(X_test_scaled)
-plt.scatter(y_test, y_test_prediction)
-plt.plot([0,600], [0,600], color="red")
-plt.title("Predicted CO2 Emissions (g/km)")
-plt.xlabel("Real CO2 Emissions (g/km)")
-plt.ylabel("Predicted CO2 Emissions (g/km)")
+plt.figure()
+plt.scatter(Y_test, Y_predicted, marker=".", color="blue")
+plt.plot([Y_test.min(), Y_test.max()], [Y_test.min(), Y_test.max()], color="green")
+plt.xlabel("Real Values")
+plt.ylabel("Predicted Values")
 plt.show()
 
-#f)
-MSE = mean_squared_error(y_test, y_test_prediction)
-RMSE = np.sqrt(MSE)
-MAE = mean_absolute_error(y_test, y_test_prediction)
-MAPE = mean_absolute_percentage_error(y_test, y_test_prediction)
-R_2 = r2_score(y_test, y_test_prediction)
-
-print("MSE: ", MSE)
-print("RMSE: ", RMSE) #Mean error of model
-print("MAE: ", MAE)
-print("MAPE: ", MAPE)
-print("R_2: ", R_2) #Precision of model
+#task F
+MAE = mean_absolute_error(Y_test, Y_predicted)
+MSE = mean_squared_error(Y_test, Y_predicted)
+RMSE = root_mean_squared_error(Y_test, Y_predicted)
+R2 = r2_score(Y_test, Y_predicted)
+print("MAE:", MAE)
+print("MSE:", MSE)
+print("RMSE:", RMSE)
+print("R2:", R2)
